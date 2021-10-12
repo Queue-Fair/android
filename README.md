@@ -107,7 +107,7 @@ QueueFairClient objects are not reusable - you should create a new one every tim
 
 If it is determined that a Queue, Hold, PreSale or PostSale page should be shown, the Queue-Fair Adapter will by default launch an activity with a whole-screen WebView in which to run any Queue Pages.
 
-To customise the display for your app, the easiest way is to can create a variant of your queue for use within your app in the Queue-Fair Portal, and tell your app to use it by passing its name as the variant parameter to the QueueFairClient constructor.  This means that your app users can participate in the same queue as your website visitors.
+To customise the display for your app, the easiest way is to can create a variant of your queue for use within your app in the Queue-Fair Portal, and tell your app to use it by passing its name as the variant parameter to the QueueFairClient constructor.  This means that your app users can participate in the same queue as your website visitors, but have a custom display for your app.
 
 For finer display control, you may wish to subclass QueueFairActivity, which will allow you to use your own custom layouts, including Android UI components.  For example, you may wish to use Android UI components for the text of the queue page, with just the progress bar within a WebView.  To do this, you can set QueueFairClient.defaultActivityClass to your new subclass.
 
