@@ -5,7 +5,7 @@ Queue-Fair can be added to any Android app easily in minutes.  This Queue-Fair A
 
 
 ## About the Adapter
-The Android Adapter has two major components, the Adapter code that checks and validates your users with the Queue-Fair service, which is reused from our Java Server-Side Adapter, and a Queue-Fair Activity that displays Queue, Hold, PreSale and PostSale display to your users when they cannot be Passed immediately by SafeGuard.
+The Android Adapter has two major components, the Adapter code that checks and validates your users with the Queue-Fair service, which is similar to our Java Server-Side Adapter, and a Queue-Fair Activity that displays Queue, Hold, PreSale and PostSale display to your users when they cannot be Passed immediately by SafeGuard.
 
 These pages are displayed inside a WebView.  You can create app-specific displays by using the Portal and a named Variant for your app.
 
