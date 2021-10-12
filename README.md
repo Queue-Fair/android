@@ -1,7 +1,7 @@
 ---
 ## Queue-Fair Android Adapter README & Installation Guide
 
-Queue-Fair can be added to any Android app easily in minutes.  This Queue-Fair Android module is suitable for native Android apps - if your Android app is a Web App running entirely in a browser, then the Client Side JavaScript Adapter is more suited to that.  You will need a Queue-Fair account - please visit https://queue-fair.com/free-trial if you don't already have one.  You should also have received our Technical Guide.
+Queue-Fair can be added to any Android app easily in minutes.  This Queue-Fair Android module is suitable for native Android apps - if your Android app is a Web App running entirely in a browser, then the Client Side JavaScript Adapter is more suited to that.  You will need a Queue-Fair account - please visit https://queue-fair.com/free-trial if you don't already have one.  You should also have received our Technical Guide.  You can find out all about Queue-Fair at https://queue-fair.com
 
 
 ## About the Adapter
