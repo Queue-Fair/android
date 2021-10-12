@@ -30,7 +30,7 @@ public class QueueFairActivity extends AppCompatActivity {
     WebView webView = null;
     Handler h;
 
-    boolean complete=false;
+    boolean complete = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,17 +71,25 @@ public class QueueFairActivity extends AppCompatActivity {
 
     private void broadcastError(String message) {
         Intent intent = new Intent();
-        intent.setAction(getPackageName()+".com.qf.adapter.QUEUE_FAIR_BROADCAST");
-        intent.putExtra("message",message);
-        intent.putExtra("result","ERROR");
+        intent.setAction(getPackageName() + ".com.qf.adapter.QUEUE_FAIR_BROADCAST");
+        intent.putExtra("message", message);
+        intent.putExtra("result", "ERROR");
         sendBroadcast(intent);
     }
 
     private void broadcastAbandon(String cause) {
         Intent intent = new Intent();
-        intent.setAction(getPackageName()+".com.qf.adapter.QUEUE_FAIR_BROADCAST");
-        intent.putExtra("cause",cause);
-        intent.putExtra("result","ABANDON");
+        intent.setAction(getPackageName() + ".com.qf.adapter.QUEUE_FAIR_BROADCAST");
+        intent.putExtra("cause", cause);
+        intent.putExtra("result", "ABANDON");
+        sendBroadcast(intent);
+    }
+
+    private void broadcastRequest(int request) {
+        Intent intent = new Intent();
+        intent.setAction(getPackageName() + ".com.qf.adapter.QUEUE_FAIR_BROADCAST");
+        intent.putExtra("request", request);
+        intent.putExtra("result", "JOIN");
         sendBroadcast(intent);
     }
 
@@ -92,11 +100,11 @@ public class QueueFairActivity extends AppCompatActivity {
         try {
             webView = (WebView) findViewById(webviewID);
         } catch (Exception e) {
-            broadcastError("Could not find webview - "+e.getMessage());
+            broadcastError("Could not find webview - " + e.getMessage());
             return;
         }
 
-        if(webView == null) {
+        if (webView == null) {
             broadcastError("Could not find webview");
         }
 
@@ -113,24 +121,20 @@ public class QueueFairActivity extends AppCompatActivity {
                 String message = consoleMessage.message();
                 if (QueueFairConfig.debug) Log.i("QFWCC", message);
 
-                if (message.indexOf("REDIRECT") == -1)
+                int i = message.indexOf("{");
+                if (i == -1) {
                     return true;
-                if (message.indexOf("qfpt") == -1)
+                }
+                if (message.indexOf("REDIRECT") == -1 && message.indexOf("JOIN") == -1)
                     return true;
 
                 try {
-                    int i = message.indexOf("{");
                     int j = message.lastIndexOf("}");
 
                     String jsonStr = message.substring(i, j + 1);
-                    String passType = null;
-                    long when = -1;
-                    String target = null;
+                    JSONObject json = null;
                     try {
-                        JSONObject json = new JSONObject(jsonStr);
-                        when = json.getLong("when");
-                        passType = json.getString("type");
-                        target = json.getString("target");
+                        json = new JSONObject(jsonStr);
                     } catch (JSONException e) {
                         if (QueueFairConfig.debug) {
                             Log.i("QFWCC", "Exception processing JSON " + jsonStr, e);
@@ -139,6 +143,23 @@ public class QueueFairActivity extends AppCompatActivity {
                         broadcastError("Queue output could not be parsed.");
                         return true;
                     }
+                    if (json == null) {
+                        broadcastError("Bad json.");
+                        return true;
+                    }
+
+                    if (message.indexOf("JOIN") != -1) {
+                        int request = json.getInt("request");
+                        QueueFairAndroidService.setPreference(QueueFairActivity.this, "mostRecentRequestNumber", "" + request);
+                        broadcastRequest(request);
+                        return true;
+                    }
+
+                    //It's a REDIRECT
+                    long when = json.getLong("when");
+                    String passType = json.getString("type");
+                    String target = json.getString("target");
+
                     if (target == null) {
                         end(0);
                         broadcastError("Invalid target from queue.");
@@ -148,40 +169,41 @@ public class QueueFairActivity extends AppCompatActivity {
                     end(when);
 
                     Intent intent = new Intent();
-                    intent.setAction(getPackageName()+".com.qf.adapter.QUEUE_FAIR_BROADCAST");
-                    intent.putExtra("target",target);
-                    intent.putExtra("when",when);
-                    intent.putExtra("passType",passType);
-                    intent.putExtra("result","SUCCESS");
+                    intent.setAction(getPackageName() + ".com.qf.adapter.QUEUE_FAIR_BROADCAST");
+                    intent.putExtra("target", target);
+                    intent.putExtra("when", when);
+                    intent.putExtra("passType", passType);
+                    intent.putExtra("result", "SUCCESS");
                     sendBroadcast(intent);
                     return true;
+
                 } catch (Exception e) {
                     if (QueueFairConfig.debug)
-                        Log.w("QFWCC", "Exception handing console " + message,e);
+                        Log.w("QFWCC", "Exception handing console " + message, e);
                     end(0);
-                    broadcastError("Error handling queue: "+e.getMessage());
+                    broadcastError("Error handling queue: " + e.getMessage());
                     return true;
                 }
             }
         });
 
-        String url=extras.getString("location");
-        if(url.indexOf("?")!=-1) {
-            url+="&";
+        String url = extras.getString("location");
+        if (url.indexOf("?") != -1) {
+            url += "&";
         } else {
-            url+="?";
+            url += "?";
         }
-        url+="qfnoredirect=true";
-        if(QueueFairConfig.debug) {
-            Log.i("QFA","Opening "+url);
+        url += "qfnoredirect=true";
+        if (QueueFairConfig.debug) {
+            Log.i("QFA", "Opening " + url);
         }
         webView.loadUrl(url);
     }
 
     @Override
     public void onBackPressed() {
-        if(webView != null) {
-            h.postDelayed(() -> webView.loadUrl("about:blank"),250);
+        if (webView != null) {
+            h.postDelayed(() -> webView.loadUrl("about:blank"), 250);
         }
         broadcastAbandon("Back");
         super.onBackPressed();
@@ -190,10 +212,10 @@ public class QueueFairActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
-        if(webView != null) {
-            h.postDelayed(() -> webView.loadUrl("about:blank"),250);
+        if (webView != null) {
+            h.postDelayed(() -> webView.loadUrl("about:blank"), 250);
         }
-        if(!complete) {
+        if (!complete) {
             broadcastAbandon("Pause");
         }
     }
