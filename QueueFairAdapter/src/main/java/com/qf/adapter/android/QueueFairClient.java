@@ -57,6 +57,10 @@ public class QueueFairClient {
                 return;
             }
             switch(result) {
+                case "JOIN":
+                    h.post(() -> listener.onJoin(x.getInt("request")));
+                    //Return without unregistering.
+                    return;
                 case "SUCCESS":
                     onPassFromQueue(x.getString("target"), x.getString("passType"), x.getLong("when"));
                     break;
