@@ -121,7 +121,25 @@ The downloaded settings are cached for up to 5 minutes by default.  You can set 
 
 Unlike our Server-Side Adapters, The Android adapter always works in SAFE_MODE - SIMPLE_MODE is not suitable for this use case.
 
+## Push Notifications
+If a user abandons the queue by closing the app or navigating away from it, their place is saved, and they will proceed through the queue when they re-open the app as if they had left it open all along.  If the front of the queue has not yet reached them, they will be closer to it.  If the front of the queue has passed them, they will be passed straight away, depending on the Front of Queue settings that you use for your queue in the Queue-Fair Portal.
+	
+You may wish to send a Push Notification to a user who has abandoned telling them that they are at the front of the queue.  Your app must have Notification permissions in order to be able to show push notifications - see https://firebase.google.com/docs/cloud-messaging and https://firebase.google.com/docs/cloud-messaging/android/first-message for a tutorial on Push Notifications in Android if you are setting up Push Notifications for the first time.
 
+Once you have a Push Notification system and server up and running, the procedure is as follows:
+	
+**1.** In the onJoin() method of your QueueFairClientListener implementation, store the received Request Number, which is the user's position in the queue.  The Adapter will also automatically store it for you, and you can get the most recently assigned Request Number at any time by calling `QueueFairAndroidService.getPreference(MainActivity.this, "mostRecentRequestNumber");` in your code.  Don't ask your Push Notification server to schedule a notification in onJoin() - just remember the request number in case you need it later.
+	
+**2.** You only want to send Push Notifications to people who have abandoned.  So, in the onAbandon() method of your QueueFairClientListener implementation, tell your Push Notification server that this user wants a notification when they reach the front of the queue.  Include the request number from onJoin() in that message to your Push Notification server.  Note that on some versions of Android, the onAbandon() method may be called multiple times due to a single act of abandonment - but you should only ask your Push Notification to send a notification once. Similarly, if the wait is long, users may abandon the queue and return to it several times.  You should therefore set a preference to persistently remember that the app has asked for a notification from your Push Notification server here, and not ask again if it is already set.
+
+**3.** Your Push Notification server will need store an association between the Request Number and the unique ID that it uses to send notifications to specific users.  It is recommended that associations stored for more than 24 hours are deleted.  Your Push Notifiation server will also need to consult the Queue-Fair Queue Status API every minute or so to find out what the current Serving number is.  If the current Serving number is greater than or equal to the Request number for a particular user, it is time to send that user the Push Notification.  The Status API may also report that the queue has emptied.  If that happens, don't send notifications to all the users that have requested them at the same time, as if they all come back at the same time, it may be necessary to queue them again - but you can prevent that from happening by sending the notifications no faster than the SafeGuard Rate for your queue when the queue is empty.
+	
+**4.** If the user returns to the app and opens the Queue again before their turn has been called, or after their turn has been called but before they have received a Push Notification from your Push Notification server, you should tell your Push Notification server not to send the notification after all.  So, in both the onPass() and onShow() methods of your QueueFairClientListener implementation, check to see if the preference you set in Step 2 has been set, and if it has, tell your Push Notification server that a notification is no longer required, and then unset the preference.
+	
+**5.** The user might abandon and rejoin the queue multiple times if the wait is long.  If they abandon again, go back to Step 2.
+
+If you need help setting up a Push Notification server for your app, please contact support@queue-fair.com and we'll be happy to help.
+	
 ## AND FINALLY
 
 Remember we are here to help you! The integration process shouldn't take you more than an hour - so if you are scratching your head, ask us.  Many answers are contained in the Technical Guide too.  We're always happy to help!
