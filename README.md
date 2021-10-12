@@ -72,7 +72,7 @@ The android:theme attribute is optional, and causes the Queue Pages to be shown 
 
 That's it you're done!
 
-### To test the Server-Side Adapter
+### To test the Android Adapter
 
 Use a queue that is not in use on other pages/apps, or create a new queue for testing.
 
