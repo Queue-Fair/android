@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="This is the initial app screen.\n\nTap Continue to go through to the protected activity.\n\nReset Adapter clears adapter persistent storage.\n\nReset Queue-Fair clears Queue-Fair cookies.\n"
+            android:textAlignment="center"
+            android:gravity="center_horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Continue"
+            android:onClick="continueClicked"
+            />
+        <Button
+            android:id="@+id/resetAdapter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reset Adapter"
+            android:onClick="resetAdapter"
+            />
+        <Button
+            android:id="@+id/resetQueueFair"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reset Queue-Fair"
+            android:onClick="resetQueueFair"
+            />
+
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
