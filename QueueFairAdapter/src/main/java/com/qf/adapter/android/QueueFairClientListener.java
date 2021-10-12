@@ -12,4 +12,6 @@ public interface QueueFairClientListener {
     void onShow();
 
     void onAbandon(String cause);
+    
+    void onJoin(int request);
 }
