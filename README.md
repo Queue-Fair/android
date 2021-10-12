@@ -45,9 +45,9 @@ This guide assumes you already have Android Studio.  We recommend you perform th
 
 **10.** Your project will now have three build.gradle files.  Find the one for the QueueFairAdapter Module.  If there is no "dependencies" section at the end of this file, or if there is no "appcompat" implementation line, add the following stanza at the end:
 
-dependencies {
-    implementation 'androidx.appcompat:appcompat:1.3.1'
-}
+	dependencies {
+    		implementation 'androidx.appcompat:appcompat:1.3.1'
+	}
 
 **11.** Now press Ctrl+Alt+Shift+S to open the Project Structure dialog.  Select Dependencies, app, and then "+" in the Declared Dependencies section, and "Module Dependency" (not Library).
 
@@ -60,7 +60,7 @@ dependencies {
 	<activity
             android:name="com.qf.adapter.android.QueueFairActivity"
             android:theme="@style/QueueFairNoTitleBar">
-        </activity>
+	</activity>
 
 The android:theme attribute is optional, and causes the Queue Pages to be shown without a title bar.
 
