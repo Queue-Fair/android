@@ -105,7 +105,7 @@ Any Target settings for your queue are also not germane to this use case and are
 
 QueueFairClient objects are not reusable - you should create a new one every time your app is about to start the protected activity/operation.
 
-The Queue-Fair Adapter will by default launch an activity with a whole-screen webview in which to run any Queue Pages. 
+If it is determined that a Queue, Hold, PreSale or PostSale page should be shown, the Queue-Fair Adapter will by default launch an activity with a whole-screen WebView in which to run any Queue Pages.
 
 To customise the display for your app, the easiest way is to can create a variant of your queue for use within your app in the Queue-Fair Portal, and tell your app to use it by passing its name as the variant parameter to the QueueFairClient constructor.  This means that your app users can participate in the same queue as your website visitors.
 
