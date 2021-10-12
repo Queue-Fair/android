@@ -13,7 +13,9 @@ All components are encapsulated into QueueFairClient, which is the class you wil
 
 The Adapter manages its own persistent storage to remember that particular users have been Passed by Queue-Fair, in the form of SharedPreferences, and also persistent Cookies when a QueueFairActivity is launched.
 
-Typically, you will replace a call to launch a protected activity or start a protected operation with a call to QueueFairClient, implementing a QueueFairListener object that then launches the protected activity or starts the operation when the app user is Passed by the queue.  Example code is contained within the QueueFairDemo's MainActivity.java file.
+Typically, you will replace a call to launch a protected activity or start a protected operation with a call to QueueFairClient, implementing a QueueFairListener object that then launches the protected activity or starts the operation when the app user is Passed by the queue.  
+
+This distribution also includes source code for a demonstration app, QueueFairDemo.  Example code for using QueueFairClient is contained within the QueueFairDemo's MainActivity.java file.
 
 If your vistors navigate away from a displayed Queue Page (by using the back button, by opening another app, or their phone going to sleep, for example), they do not lose their place in the queue - it is saved in the same way as places are saved for your web visitors.
 
