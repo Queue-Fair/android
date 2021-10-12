@@ -94,7 +94,7 @@ Tap Continue.
  - When you come back to the page from the queue, verify that a Toast appears containing the word "Passed", and that the protected activity launches.
  - Use the back button and hit Continue again.  Verify that you are shown as "Repassed", without seeing a Queue Page a second time.
 
-If you wish to fully clear your Passed status, then if you have been shown a Queue Page, you must tap both Reset Adapter and Reset Queue-Fair.
+If you wish to fully clear your Passed status, then if you have been shown a Queue Page, you must tap both Reset Adapter and Reset Queue-Fair buttons.  These buttons are present in the QueueFairDemo app to help you test - you would not normally show them in a production app.
 
 
 ### Advanced Topics
