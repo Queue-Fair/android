@@ -12,7 +12,7 @@ public class QueueFairAndroidService implements QueueFairService {
     Context context;
     String redirectLocation=null;
 
-    private String getPreference(String key) {
+    public static String getPreference(Context context, String key) {
 
         if(context == null) {
             if(QueueFairConfig.debug) Log.i("QFS","Trying to get preference with null context!");
@@ -23,7 +23,7 @@ public class QueueFairAndroidService implements QueueFairService {
         return preferences.getString(key, "DEFAULT_VALUE");
     }
 
-    private void setPreference(String key, String value) {
+    public static void setPreference(Context context, String key, String value) {
         if(QueueFairConfig.debug) Log.i("QFS","Seting pref " + key + " to " + value);
         SharedPreferences preferences = context.getSharedPreferences(
                 "QueueFair", Context.MODE_PRIVATE);
@@ -48,12 +48,12 @@ public class QueueFairAndroidService implements QueueFairService {
         //Called by adapter to set any cookie
         if(QueueFairConfig.debug) Log.i("QFS","Setting cookie "+name+" to "+value+" life "+lifetimeSeconds);
         if(lifetimeSeconds <= 0) {
-            setPreference(name, "DEFAULT_VALUE");
-            setPreference(name+":expires","DEFAULT_VALUE");
+            setPreference(context, name, "DEFAULT_VALUE");
+            setPreference(context,name+":expires","DEFAULT_VALUE");
             return;
         }
-        setPreference(name,value);
-        setPreference(name+":expires",""+(System.currentTimeMillis()+(lifetimeSeconds*1000l)));
+        setPreference(context, name,value);
+        setPreference(context,name+":expires",""+(System.currentTimeMillis()+(lifetimeSeconds*1000l)));
     }
 
     @Override
@@ -65,21 +65,21 @@ public class QueueFairAndroidService implements QueueFairService {
 
     @Override
     public String getCookie(String name) {
-        String ret=getPreference(name);
+        String ret=getPreference(context,name);
         if(QueueFairConfig.debug) Log.i("QFS","Preference for "+name+" is "+ret);
         if("DEFAULT_VALUE".equals(ret)) {
             return "";
         }
-        String expires=getPreference(name+":expires");
+        String expires=getPreference(context,name+":expires");
         if("DEFAULT_VALUE".equals(expires)) {
-            setPreference(name,"DEFAULT_VALUE");
+            setPreference(context, name,"DEFAULT_VALUE");
             return "";
         }
         Long expireEpoch = Long.parseLong(expires);
         if(expireEpoch < System.currentTimeMillis()) {
             if(QueueFairConfig.debug) Log.i("QFS","Preference for "+name+" has expired");
-            setPreference(name,"DEFAULT_VALUE");
-            setPreference(name+":expires","DEFAULT_VALUE");
+            setPreference(context, name,"DEFAULT_VALUE");
+            setPreference(context,name+":expires","DEFAULT_VALUE");
             return "";
         }
         return ret;
