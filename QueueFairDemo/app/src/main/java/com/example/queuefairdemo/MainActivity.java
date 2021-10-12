@@ -69,6 +69,8 @@ public class MainActivity extends AppCompatActivity {
             //People are considered passed for the PassedLifetime from your queue settings in the portal.  If someone
             //goes back and through again, they get passType "Repass".
             public void onPass(String passType) {
+                // If you have already told your Push Notification system to send a notification in onAbandon(),
+                // tell it to cancel the request here.
                 Toast.makeText(MainActivity.this,"Pass: "+passType, Toast.LENGTH_LONG).show();
                 startProtectedActivity();
             }
@@ -84,13 +86,35 @@ public class MainActivity extends AppCompatActivity {
             @Override
             //Called by the adapter when it is about to show a Queue, PreSale, PostSale or Hold page.
             public void onShow() {
+                // If you have already requested your Push Notification system to send a notification when this user
+                // reaches the front of the queue in your implementation of onAbandon(), cancel the request here.
                 Toast.makeText(MainActivity.this,"Showing Queue-Fair", Toast.LENGTH_LONG).show();
             }
 
-            //Called by the adapter when a user has left the queue, for example by pressing the back button,
-            //or opening another app.  Their place is saved, and when they come back, they will be
-            //recognised.
+
+            @Override
+            // Called by the adapter when a user is assigned a queue position.  You can use this with
+            // your notification system to send a Push Notification to a user who has closed your app
+            // that they have reached the front of the queue.  See https://firebase.google.com/docs/cloud-messaging
+            // and https://firebase.google.com/docs/cloud-messaging/android/first-message for a tutorial on Push Notifications.
+            public void onJoin(int request) {
+                // You may wish to store the request number (queue position) within your own code.  It will also be persistently
+                // stored by the Adapter automatically.  You can get the most recently assigned request number (queue position)
+                // with QueueFairAndroidService.getPreference(MainActivity.this, "mostRecentRequestNumber");
+                //
+                // You should wait until onAbandon() is called to tell your Push Notification system to send a
+                // notification when the visitor reaches the front of the queue.  For now just remember the request number.
+                Toast.makeText(MainActivity.this, "Joined with request "+request,Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            // Called by the adapter when a user has left the queue, for example by pressing the back button,
+            // or opening another app.  Their place is saved, and when they come back, they will be
+            // recognised.  If they leave the app open with the queue displayed on the screen, this method is not
+            // called.
             public void onAbandon(String cause) {
+                // If you wish to send the user a notification when this user has reached the front of the queue,
+                // tell your Push Notification system here, using the request number stored from onJoin()
                 Toast.makeText(MainActivity.this, "Abandon: "+cause, Toast.LENGTH_LONG).show();
             }
 
