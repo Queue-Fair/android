@@ -156,6 +156,10 @@ public class QueueFairActivity extends AppCompatActivity {
                     }
 
                     //It's a REDIRECT
+                    if(message.indexOf("qfpt" == -1) {
+                        return true;   
+                    }
+                    
                     long when = json.getLong("when");
                     String passType = json.getString("type");
                     String target = json.getString("target");
