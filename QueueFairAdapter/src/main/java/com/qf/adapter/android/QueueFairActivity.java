@@ -156,7 +156,7 @@ public class QueueFairActivity extends AppCompatActivity {
                     }
 
                     //It's a REDIRECT
-                    if(message.indexOf("qfpt" == -1) {
+                    if(message.indexOf("qfpt") == -1) {
                         return true;   
                     }
                     
