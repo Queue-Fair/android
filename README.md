@@ -120,8 +120,6 @@ Your Account and Queue settings are downloaded by the Adapter in normal operatio
 The downloaded settings are cached for up to 5 minutes by default.  You can set QueueFairConfig.settingsCacheLifetimeMinutes to 0 to download a fresh copy of the settings every time, which may be useful while you are coding - but please set this back to at least 5 for release versions of your app.
 
 Unlike our Server-Side Adapters, The Android adapter always works in SAFE_MODE - SIMPLE_MODE is not suitable for this use case.
-	
-You can also use this library on Windows and MacOS React Native apps - but note that these platforms do not support DefaultPreference, so you will need to use another storage mechanism for persistent storage of Passed status on these platforms.  This will require minor modifications to QueueFairAdapter.js and QueueFairWebService.js where DefaultPreference is used.
 
 ## Push Notifications
 If a user abandons the queue by closing the app or navigating away from it, their place is saved, and they will proceed through the queue when they re-open the app as if they had left it open all along.  If the front of the queue has not yet reached them, they will be closer to it.  If the front of the queue has passed them, they will be passed straight away, depending on the Front of Queue settings that you use for your queue in the Queue-Fair Portal.
