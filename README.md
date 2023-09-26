@@ -73,8 +73,7 @@ The android:theme attribute is optional, and causes the Queue Pages to be shown 
 That's it you're done!
 
 ### To test the Android Adapter
-
-Use a queue that is not in use on other pages/apps, or create a new queue for testing.
+We RECOMMEND you run both the tests in this section after any update to your app that could affect the operation of your Queue-Fair Adapter, including changes you make in the Portal, updates to packages used by your app, SDK updates, Studio updates or operating system updates.  If you have a release test matrix, add both these quick tests to it.  Use a queue that is not in use on other pages/apps, or create a new queue for testing.
 
 #### Testing SafeGuard
 Make sure your code uses the correct queue System Name, and that the Queue is set to SafeGuard.
