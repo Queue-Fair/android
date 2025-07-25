@@ -23,6 +23,7 @@
         </activity>
         <activity
             android:name="com.qf.adapter.android.QueueFairActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
             android:exported="true">
         </activity>
     </application>
