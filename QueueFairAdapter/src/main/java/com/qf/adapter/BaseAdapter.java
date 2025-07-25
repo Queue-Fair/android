@@ -11,10 +11,5 @@ public class BaseAdapter {
 
     static boolean sendIPAddressToAdapter =  false;
 
-    static boolean usesSecrets = false;
-
-    public String getSettingsURL() {
-        return QueueFairConfig.protocol + "://" + QueueFairConfig.filesServer + "/"
-                + QueueFairConfig.account + "/queue-fair-settings.js";
-    }
+    boolean usesSecrets = false;
 }
