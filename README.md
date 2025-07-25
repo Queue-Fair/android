@@ -29,7 +29,7 @@ This guide assumes you already have Android Studio.  We recommend you perform th
 
 **3.** Build and run your empty app with the Play button to make sure it's working.
 
-**4.** In File Explorer or Finder (Not Android Studio), Copy-and-paste QueueFairDemo/app/src from this distribution into the "app" folder that has been created by Studio, overwriting any files therein.
+**4.** In File Explorer or Finder (Not Android Studio), Copy-and-paste QueueFairDemo/app/src from this distribution into the "app" folder that has been created by Studio, overwriting any files therein.  If your resulting app/src/main/java/com/examp/queuefairdemo folder has a MainActivity.kt file left over from making the empty activity, delete it.
 
 **5.** Android Studio will recognise the changes.  You will have build errors until you add the Adapter module as detailed in the next section.
 
@@ -37,19 +37,21 @@ This guide assumes you already have Android Studio.  We recommend you perform th
 
 **6.** In Android Studio with your app open, from the File menu, select New and New Module.
 
-**7.** Select "Android Library" from the left pane.  Name the module QueueFairAdapter, and the package name must be "com.qf.adapter".  Gradle will sync; wait for it to finish.
+**7.** Select "Android Library" from the left pane.  Name the module QueueFairAdapter, and the package name must be "com.qf.adapter".  Gradle will sync when you hit Finish; wait for that to finish.
 
 **8.** You will see QueueFairAdapter appear in the package explorer on the left hand side of Studio.
 
 **9.** In File Explorer / Finder (not Android Studio), Copy-and-paste QueueFairAdapter/src from this distribution into the QueueFairAdapter folder that has been created by Studio, overwriting any files therein.
 
-**10.** Your project will now have three build.gradle files.  Find the one for the QueueFairAdapter Module.  If there is no "dependencies" section at the end of this file, or if there is no "appcompat" implementation line, add the following stanza at the end:
+**10.** OPTIONAL: If you are using an old version of Studio, you might need to enable AppCompat.  For newer versions it's probably safe to skip this step - you can come back to it if you get AppCompat compile errors at the end.  Your project will now have three build.gradle files.  Find the one for the QueueFairAdapter Module.  If there is no "dependencies" section at the end of this file, or if there is no "appcompat" implementation line, add the following stanza at the end:
 
 	dependencies {
     		implementation 'androidx.appcompat:appcompat:1.3.1'
 	}
+ 
+If your build.gradle has the .kts extension, then it’s brackets and doble quotes instead of single quotes around the string, but in that case your Studio is probably new enough to skip this step anyway.
 
-**11.** Now press Ctrl+Alt+Shift+S to open the Project Structure dialog.  Select Dependencies, app, and then "+" in the Declared Dependencies section, and "Module Dependency" (not Library).
+**11.** Now press Ctrl+Alt+Shift+S to open the Project Structure dialog.  Select Dependencies, then app from the Modules pane, and then "+" in the Declared Dependencies section, and "Module Dependency" (not Library).
 
 **12.** Check the QueueFairAdapter box and hit OK.  Gradle will sync, and your app is now buildable.
 
@@ -59,7 +61,7 @@ This guide assumes you already have Android Studio.  We recommend you perform th
 
 	<activity
             android:name="com.qf.adapter.android.QueueFairActivity"
-            android:theme="@style/QueueFairNoTitleBar">
+            android:theme="@style/Theme.AppCompat.NoActionBar">
 	</activity>
 
 The android:theme attribute is optional, and causes the Queue Pages to be shown without a title bar.
@@ -114,9 +116,7 @@ If you need to use a variety of different QueueFairActivity subclasses for diffe
 
 Logging to Logcat is disabled by default, but you can enable it with QueueFairConfig.debug = true - but please make sure it is disabled for release versions of your app.
 
-Your Account and Queue settings are downloaded by the Adapter in normal operation.  No queue or account secrets are downloaded or used, for security reasons (as they would be accessible to a very technically skilled user).  Secrets are not necessary for this use case.
-
-The downloaded settings are cached for up to 5 minutes by default.  You can set QueueFairConfig.settingsCacheLifetimeMinutes to 0 to download a fresh copy of the settings every time, which may be useful while you are coding - but please set this back to at least 5 for release versions of your app.
+Unlike our Server-Side Adapters, this Adapter does not download your queue settings from the Portal – rather you specify the queue system name you want to use, and the Passed Lifetime (which defaults to 20 minutes) in your code - so the Passed Lifetime setting in the Portal is ignored. Activation Rules are not relevant for any of our App adapters.
 
 Unlike our Server-Side Adapters, The Android adapter always works in SAFE_MODE - SIMPLE_MODE is not suitable for this use case.
 
