@@ -49,7 +49,7 @@ This guide assumes you already have Android Studio.  We recommend you perform th
     		implementation 'androidx.appcompat:appcompat:1.3.1'
 	}
  
-If your build.gradle has the .kts extension, then it’s brackets and doble quotes instead of single quotes around the string, but in that case your Studio is probably new enough to skip this step anyway.
+If your build.gradle has the .kts extension, then it’s brackets and double quotes instead of single quotes around the string, but in that case your Studio is probably new enough to skip this step anyway.
 
 **11.** Now press Ctrl+Alt+Shift+S to open the Project Structure dialog.  Select Dependencies, then app from the Modules pane, and then "+" in the Declared Dependencies section, and "Module Dependency" (not Library).
 
