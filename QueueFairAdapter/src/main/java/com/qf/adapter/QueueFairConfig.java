@@ -6,7 +6,7 @@ public class QueueFairConfig {
     public static final int MODE_SAFE = 1;
 
     //Your Account Secret is shown on the Your Account page of
-    //the Queue-Fair Portal.  If you change it there, you must
+    //the QueueFair Portal.  If you change it there, you must
     //change it here too.
     public static String accountSecret = "REPLACE_WITH_YOUR_ACCOUNT_SECRET";
 
