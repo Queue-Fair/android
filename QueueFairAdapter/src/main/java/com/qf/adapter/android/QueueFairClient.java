@@ -7,23 +7,25 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 
+
 import com.qf.adapter.QueueFairAdapter;
 import com.qf.adapter.QueueFairConfig;
-import com.qf.adapter.QueueFairSettings;
-
-import java.util.Arrays;
 
 public class QueueFairClient {
+
+    public static String domainSuffix = "queue-fair.net";
 
     Activity parent;
     String queueServerDomain;
     String accountSystemName;
     String queueSystemName;
     String variant;
+    int passedLifetimeMinutes = 20;
     QueueFairClientListener listener;
     QueueFairAndroidService service;
     QueueFairAndroidAdapter adapter;
@@ -78,17 +80,23 @@ public class QueueFairClient {
         }
     }
 
+    /* Retained for backward compatibility - defaults to 20 minutes Passed Lifetime */
     public QueueFairClient(Activity parent, String queueServerDomain, String accountSystemName, String queueSystemName, String variant, QueueFairClientListener listener) {
+        this(parent,queueServerDomain,accountSystemName,queueSystemName,variant,20,listener);
+    }
+
+    public QueueFairClient(Activity parent, String queueServerDomain, String accountSystemName, String queueSystemName, String variant, int passedLifetimeMinutes, QueueFairClientListener listener) {
         this.parent = parent;
         this.accountSystemName = accountSystemName;
         this.queueSystemName = queueSystemName;
         if (queueServerDomain == null) {
-            this.queueServerDomain = accountSystemName + ".queue-fair.net";
+            this.queueServerDomain = accountSystemName + "."+domainSuffix;
         } else {
             this.queueServerDomain = queueServerDomain;
         }
         this.variant = variant;
         this.listener = listener;
+        this.passedLifetimeMinutes = passedLifetimeMinutes;
         this.d = QueueFairConfig.debug;
         h = new Handler(parent.getMainLooper());
         QueueFairConfig.account = accountSystemName;
@@ -129,21 +137,16 @@ public class QueueFairClient {
 
         adapter.setUIDFromCookie();
 
-        adapter.settings = adapter.loadSettings();
-        if (d) Log.i(TAG, "Got settings " + adapter.settings);
+        QueueFairAdapter.Queue queue = adapter.new Queue();
+        queue.name = queueSystemName;
+        queue.adapterServer = (queueServerDomain != null ? queueServerDomain : accountSystemName + "." +  domainSuffix);
+        queue.queueServer = queue.adapterServer;
+        queue.displayName = queue.name;
+        queue.variant = variant;
+        queue.passedLifetimeMinutes = this.passedLifetimeMinutes;
 
-        if (adapter.settings == null) {
-            h.post(() -> listener.onNoSettings());
-            return;
-        }
+        adapter.adapterQueue = queue;
 
-        QueueFairSettings.Queue queue = getQueueSettings(queueSystemName, adapter.settings);
-        if (queue == null) {
-            if (d)
-                Log.i(TAG, "No queue " + queueSystemName + " in " + Arrays.toString(adapter.settings.queues));
-            h.post(() -> listener.onNoSettings());
-            return;
-        }
         String cookie = service.getCookie("QueueFair-Pass-" + queue.name);
         if (!"".equals(cookie)) {
             if (adapter.validateCookie(queue, cookie)) {
@@ -184,7 +187,12 @@ public class QueueFairClient {
             Log.i(TAG,"Registering listener for "+action);
         }
         intentFilter.addAction(action);
-        parent.registerReceiver(new ClientReceiver(), intentFilter);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            parent.registerReceiver(new ClientReceiver(), intentFilter, Context.RECEIVER_EXPORTED);
+        } else {
+            parent.registerReceiver(new ClientReceiver(), intentFilter);
+        }
 
         if (QueueFairConfig.debug) Log.i(TAG, "Launching Queue-Fair Activity");
         Intent intent = new Intent(parent, activityClass);
@@ -224,18 +232,6 @@ public class QueueFairClient {
 
             h.postDelayed(() -> listener.onPass(passType), when);
         });
-    }
-
-    private QueueFairSettings.Queue getQueueSettings(String qname, QueueFairSettings settings) {
-        if (qname == null)
-            return null;
-        for (QueueFairSettings.Queue queue : settings.queues) {
-            if (d) Log.i(TAG, "Found queue " + queue.name);
-            if (qname.equals(queue.name)) {
-                return queue;
-            }
-        }
-        return null;
     }
 
     private boolean haveNetworkConnection() {
