@@ -1,7 +1,6 @@
 package com.example.queuefairdemo;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -11,7 +10,7 @@ import com.qf.adapter.QueueFairConfig;
 import com.qf.adapter.android.QueueFairClient;
 import com.qf.adapter.android.QueueFairClientListener;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void resetQueueFair(View view) {
         QueueFairClient.resetQueueFair(this);
-        Toast.makeText(this,"Queue-Fair storage cleared.",Toast.LENGTH_LONG).show();
+        Toast.makeText(this,"QueueFair storage cleared.",Toast.LENGTH_LONG).show();
     }
 
     private void startProtectedActivity() {
@@ -45,21 +44,15 @@ public class MainActivity extends AppCompatActivity {
         //Please do not release your app with this line uncommented!
         //QueueFairConfig.settingsCacheLifetimeMinutes = 0;
 
-        QueueFairClient client = new QueueFairClient(this, null, "YOUR_ACCOUNT_SYSTEM_NAME","YOUR_QUEUE_SYSTEM_NAME",null, new QueueFairClientListener() {
+        //You MUST replace the fields indicated with the system name of your account, and the system name of the queue you wish to use.
+        //In this example, the passedLifetime is here set to 5 minutes.  The Passed Lifetime setting in the Portal is no longer used.
+        QueueFairClient client = new QueueFairClient(this, null, "REPLACE_WITH_ACCOUNT_SYSTEM_NAME","REPLACE_WITH_QUEUE_SYSTEM_NAME",null, 5, new QueueFairClientListener() {
 
             @Override
             //Called by the adapter if there is no internet connection.
             //You will usually want to start the protected activity/operation in this case.
             public void onNoInternet() {
                 Toast.makeText(MainActivity.this,"No internet connection.  Try again later.",Toast.LENGTH_LONG).show();
-                startProtectedActivity();
-            }
-
-            @Override
-            //Called by the adapter if there your account and queue settings could not be found.
-            //Check that you have put in the correct account system name and queue system name in the client constructor call above.
-            public void onNoSettings() {
-                Toast.makeText(MainActivity.this,"Settings not found.  Try again later.",Toast.LENGTH_LONG).show();
                 startProtectedActivity();
             }
 
@@ -78,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             //Called by the adapter if something goes wrong.
             //You will usually want to start the protected activity/operation in this case.
+            //If you give the wrong account system name or queue system name, this method will be
+            //called with the message Network error.
             public void onError(String s) {
                 Toast.makeText(MainActivity.this,"Error: "+s, Toast.LENGTH_LONG).show();
                 startProtectedActivity();
