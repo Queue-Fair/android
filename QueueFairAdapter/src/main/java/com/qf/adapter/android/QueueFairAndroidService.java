@@ -71,6 +71,7 @@ public class QueueFairAndroidService implements QueueFairService {
             return "";
         }
         String expires=getPreference(context,name+":expires");
+        if(QueueFairConfig.debug) Log.i("QFS","Preference Expires for "+name+" is "+expires);
         if("DEFAULT_VALUE".equals(expires)) {
             setPreference(context, name,"DEFAULT_VALUE");
             return "";
