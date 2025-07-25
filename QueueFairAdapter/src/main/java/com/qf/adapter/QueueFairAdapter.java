@@ -14,16 +14,18 @@ public class QueueFairAdapter extends BaseAdapter {
 
     static final String synch = "synch";
 
-    static ThreadLocal<QueueFairAdapter> adapters = new ThreadLocal<QueueFairAdapter>() {
-        @Override
-        public QueueFairAdapter initialValue() {
-            return new QueueFairAdapter();
-        }
-    };
-
-    private static volatile QueueFairSettings memSettings;
-
-    private static volatile long lastMemSettings;
+    public class Queue {
+        public String name;
+        public String displayName;
+        public String cookieDomain;
+        public String adapterMode = "safe";
+        public String adapterServer;
+        public String queueServer;
+        public String secret;
+        public String variant;
+        public String dynamicTarget = "disabled";
+        public int passedLifetimeMinutes = 20;
+    }
 
     public static final String COOKIE_NAME_BASE = "QueueFair-Pass-";
 
@@ -32,9 +34,8 @@ public class QueueFairAdapter extends BaseAdapter {
     private boolean addedCacheControlHeader = false;
 
     // State
-    public QueueFairSettings settings = null;
     public Map<String, Object> adapterResult = null;
-    public QueueFairSettings.Queue adapterQueue = null;
+    public Queue adapterQueue = null;
     private HashSet<String> passedQueues = null;
     private String uid = null;
     private boolean continuePage = true;
@@ -47,7 +48,6 @@ public class QueueFairAdapter extends BaseAdapter {
     public String extra = null;
 
     private QueueFairAdapter reset() {
-        settings = null;
         adapterResult = null;
         adapterQueue = null;
         passedQueues = null;
@@ -59,27 +59,6 @@ public class QueueFairAdapter extends BaseAdapter {
         userAgent = null;
         extra = null;
         return this;
-    }
-
-    /**
-     * Call this method to get an Adapter object from a pool. Use this when you are
-     * using a thread pool, such as Tomcat. Reusing objects improves performance.
-     *
-     * @param service An object embodying the functions required from the HTTP
-     *                request and response in order to validate and process the
-     *                visitor.
-     * @return a QueueFairAdapter ready to call go().
-     */
-    public static QueueFairAdapter getAdapter(QueueFairService service) {
-        if (QueueFairConfig.useThreadLocal) {
-            QueueFairAdapter adapter = adapters.get();
-            if (adapter == null) {
-                return new QueueFairAdapter(service);
-            }
-
-            return adapter.reset().init(service);
-        }
-        return new QueueFairAdapter(service);
     }
 
     /**
@@ -145,57 +124,6 @@ public class QueueFairAdapter extends BaseAdapter {
         return Boolean.parseBoolean(obj.toString());
     }
 
-    private boolean isMatch(QueueFairSettings.Queue queue) {
-
-        if (queue == null || queue.rules == null)
-            return false;
-
-        return isMatchArray(queue.rules);
-
-    }
-
-    private boolean isMatchArray(QueueFairSettings.Rule[] arr) {
-        if (arr == null)
-            return false;
-        boolean firstOp = true;
-        boolean state = false;
-
-        for (QueueFairSettings.Rule rule : arr) {
-            String operator = rule.operator;
-
-            if (operator != null) {
-                if (operator.equals("And") && !state) {
-                    return false;
-                } else if (operator.equals("Or") && state) {
-                    return true;
-                }
-            }
-
-            boolean ruleMatch = isRuleMatch(rule);
-
-            if (firstOp) {
-                state = ruleMatch;
-                firstOp = false;
-            } else {
-                if ("And".equals(operator)) {
-                    state = (state && ruleMatch);
-                    if (!state) {
-                        break;
-                    }
-                } else if ("Or".equals(operator)) {
-                    state = (state || ruleMatch);
-                    if (state) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (QueueFairConfig.debug)
-            log.info("QF Rule result is " + state);
-
-        return state;
-    }
 
     private void markPassed(String name) {
         if (passedQueues == null) {
@@ -229,154 +157,6 @@ public class QueueFairAdapter extends BaseAdapter {
         }
     }
 
-    public boolean isRuleMatch(QueueFairSettings.Rule rule) {
-        String comp = requestedURL;
-        if (QueueFairConfig.debug)
-            log.info("QF Checking rule against " + comp);
-        String component = rule.component;
-        switch (component) {
-            case "Domain":
-                comp = comp.replaceAll("http://", "");
-                comp = comp.replaceAll("https://", "");
-                comp = comp.split("[/?#:]")[0];
-                break;
-            case "Path": {
-                String domain = comp.replaceAll("http://", "");
-                domain = domain.replaceAll("https://", "");
-                domain = domain.split("[/?#:]")[0];
-
-                int i = comp.indexOf(domain);
-                comp = comp.substring(i + domain.length());
-
-                if (comp.startsWith(":")) {
-                    // We have a port
-                    i = comp.indexOf("/");
-                    if (i != -1) {
-                        comp = comp.substring(i);
-                    } else {
-                        comp = "";
-                    }
-                }
-
-                i = comp.indexOf("#");
-                if (i != -1) {
-                    comp = comp.substring(0, i);
-                }
-
-                i = comp.indexOf("?");
-                if (i != -1) {
-                    comp = comp.substring(0, i);
-                }
-
-                if (comp.equals("")) {
-                    comp = "/";
-                }
-                break;
-            }
-            case "Query": {
-                int i = comp.indexOf('?');
-                if (i == -1) {
-                    comp = "";
-                } else if (comp.equals("?")) {
-                    comp = "";
-                } else {
-                    comp = comp.substring(i + 1);
-                }
-                break;
-            }
-            case "Cookie":
-                comp = service.getCookie(rule.name);
-                if (comp == null) {
-                    comp = "";
-                }
-                break;
-        }
-
-        String test = (String) rule.value;
-
-        if (!rule.caseSensitive) {
-            comp = comp.toLowerCase();
-            test = test.toLowerCase();
-        }
-
-        String match = rule.match;
-        boolean negate = rule.negate;
-
-        if (QueueFairConfig.debug)
-            log.info("QF Testing " + component + " " + test + " against " + comp + " " + match + " " + negate);
-
-        boolean ret = false;
-
-        if (match.equals("Equal") && comp.equals(test)) {
-            ret = true;
-        } else if (match.equals("Contain") && comp != null && !comp.equals("") && comp.contains(test)) {
-            ret = true;
-        } else if (match.equals("Exist")) {
-            ret = comp != null && !"".equals(comp);
-        }
-
-        if (negate) {
-            ret = !ret;
-        }
-
-        return ret;
-    }
-
-    private boolean onMatch(QueueFairSettings.Queue queue) {
-        if (isPassed(queue)) {
-            if (QueueFairConfig.debug)
-                log.info("QF Already passed " + queue.name + ".");
-            return true;
-        } else if (!continuePage) {
-            return false;
-        }
-
-        if (QueueFairConfig.debug)
-            log.info("QF Checking at server " + queue.displayName);
-        consultAdapter(queue);
-        return false;
-    }
-
-    private boolean isPassed(QueueFairSettings.Queue queue) {
-        String qName = queue.name;
-        if (passedQueues != null && passedQueues.contains(qName)) {
-            if (QueueFairConfig.debug)
-                log.info("QF Queue " + qName + " marked as passed already.");
-
-            return true;
-        }
-
-        String queueCookie = service.getCookie(COOKIE_NAME_BASE + queue.name);
-
-        if (queueCookie == null || "".equals(queueCookie)) {
-            if (QueueFairConfig.debug)
-                log.info("QF No cookie found for queue " + qName);
-            return false;
-        }
-
-        if (QueueFairConfig.debug)
-            log.info("Queue cookie found " + queueCookie);
-
-        if (!queueCookie.contains(qName)) {
-            if (QueueFairConfig.debug)
-                log.info("QF Cookie value is invalid for " + qName);
-            return false;
-        }
-
-        if (!validateCookie(queue, queueCookie)) {
-            if (QueueFairConfig.debug)
-                log.info("QF Cookie failed validation " + queueCookie);
-            checkAndAddCacheControl();
-            setCookie(qName, "", 0, queue.cookieDomain);
-            return false;
-        }
-
-        if (QueueFairConfig.debug)
-            log.info("QF Found valid cookie for " + qName);
-
-        return true;
-    }
-
     public void setUIDFromCookie() {
         String cookieBase = "QueueFair-Store-" + QueueFairConfig.account;
 
@@ -396,74 +176,6 @@ public class QueueFairAdapter extends BaseAdapter {
         uid = uidCookie.substring(i + 1);
     }
 
-    private void gotSettings() {
-        if (QueueFairConfig.debug)
-            log.info("QF Got client settings.");
-        checkQueryString();
-        if (!continuePage) {
-            return;
-        }
-
-        parseSettings();
-    }
-
-    private void parseSettings() {
-        if (settings == null) {
-            log.warning("QF ERROR: Settings not set.");
-            return;
-        }
-
-        QueueFairSettings.Queue[] queues = settings.queues;
-
-        if (queues == null || queues.length == 0) {
-            if (QueueFairConfig.debug)
-                log.info("QF No queues found.");
-            return;
-        }
-
-        if (QueueFairConfig.debug)
-            log.info("QF Running through queue rules");
-
-        for (QueueFairSettings.Queue queue : queues) {
-
-            if (passedQueues != null && passedQueues.contains(queue.name)) {
-                if (QueueFairConfig.debug)
-                    log.info("QF Passed from array " + queue.name);
-                continue;
-            }
-
-            if (QueueFairConfig.debug)
-                log.info("QF Checking " + queue.name);
-            if (isMatch(queue)) {
-                if (QueueFairConfig.debug)
-                    log.info("QF Got a match " + queue.displayName);
-
-                if (!onMatch(queue)) {
-                    if (!continuePage) {
-                        return;
-                    }
-
-                    if (QueueFairConfig.debug)
-                        log.info("QF Found matching unpassed queue " + queue.displayName);
-                    if (QueueFairConfig.adapterMode == QueueFairConfig.MODE_SIMPLE) {
-                        return;
-                    } else {
-                        continue;
-                    }
-                }
-                if (!continuePage)
-                    return;
-                // Passed.
-                markPassed(queue.name);
-
-            } else {
-                if (QueueFairConfig.debug)
-                    log.info("QF Rules did not match " + queue.name);
-            }
-        }
-        if (QueueFairConfig.debug)
-            log.info("QF All queues checked.");
-    }
 
     private String processIdentifier(String param) {
         if (param == null)
@@ -477,7 +189,7 @@ public class QueueFairAdapter extends BaseAdapter {
         return param.substring(0, i);
     }
 
-    public void consultAdapter(QueueFairSettings.Queue queue) {
+    public void consultAdapter(Queue queue) {
 
         if (QueueFairConfig.debug)
             log.info("QF Consulting Adapter Server for " + queue.name);
@@ -537,39 +249,13 @@ public class QueueFairAdapter extends BaseAdapter {
         }
     }
 
-    public String getVariant(QueueFairSettings.Queue queue) {
+    public String getVariant(Queue queue) {
         if (queue == null)
             return null;
-
-        if (QueueFairConfig.debug)
-            log.info("QF Getting variants for " + queue.name);
-
-        QueueFairSettings.Variant[] variantRules = queue.variantRules;
-
-        if (variantRules == null) {
-            return null;
-        }
-
-        if (QueueFairConfig.debug)
-            log.info("QF Got variant rules " + Arrays.toString(variantRules) + " for " + queue.name);
-
-        String variantName;
-        boolean ret;
-        for (QueueFairSettings.Variant variant : variantRules) {
-            variantName = variant.variant;
-            QueueFairSettings.Rule[] rules = variant.rules;
-            ret = isMatchArray(rules);
-            if (QueueFairConfig.debug)
-                log.info("QF Variant match " + variantName + " " + ret);
-            if (ret) {
-                return variantName;
-            }
-        }
-
-        return null;
+        return queue.variant;
     }
 
-    public String appendVariantToRedirectLocation(QueueFairSettings.Queue queue, String url) {
+    public String appendVariantToRedirectLocation(Queue queue, String url) {
         if (QueueFairConfig.debug)
             log.info("appendVariant looking for variant");
         String variant = getVariant(queue);
@@ -589,7 +275,7 @@ public class QueueFairAdapter extends BaseAdapter {
         return url;
     }
 
-    public String appendExtraToRedirectLocation(QueueFairSettings.Queue queue, String url) {
+    public String appendExtraToRedirectLocation(Queue queue, String url) {
         if (extra == null) {
             return url;
         }
@@ -713,50 +399,6 @@ public class QueueFairAdapter extends BaseAdapter {
 
     }
 
-    public QueueFairSettings loadSettings() {
-        if (memSettings != null && (QueueFairConfig.settingsCacheLifetimeMinutes == -1
-                || now - lastMemSettings < QueueFairConfig.settingsCacheLifetimeMinutes * 60000L)) {
-            return memSettings;
-        }
-
-        synchronized (synch) {
-            if (memSettings != null && (QueueFairConfig.settingsCacheLifetimeMinutes == -1
-                    || now - lastMemSettings < QueueFairConfig.settingsCacheLifetimeMinutes * 60000L)) {
-                return memSettings;
-            }
-
-            try {
-                String url = getSettingsURL();
-
-                if (QueueFairConfig.debug)
-                    log.info("Downloading settings for memory from " + url);
-
-                Map<String, Object> temp = urlToMap.urlToMap(url);
-                if (temp == null) {
-                    log.info("Could not download Queue-Fair settings!");
-                    return memSettings;
-                }
-                memSettings = new QueueFairSettings(temp);
-                lastMemSettings = System.currentTimeMillis();
-                return memSettings;
-            } catch (Exception e) {
-                log.log(Level.WARNING, "QF Exception downloading settings to memory", e);
-            }
-            // Could be old settings on error.
-            return memSettings;
-        }
-    }
-
-    /**
-     * Forces a reload of settings from the Queue-Fair servers.
-     */
-    public void reloadSettings() {
-        int originalSetting = QueueFairConfig.settingsCacheLifetimeMinutes;
-        QueueFairConfig.settingsCacheLifetimeMinutes = 0;
-        loadSettings();
-        QueueFairConfig.settingsCacheLifetimeMinutes = originalSetting;
-    }
-
     private static final char[] HEX_ARRAY = "0123456789abcdef".toCharArray();
 
     public static String bytesToHex(byte[] bytes) {
@@ -785,7 +427,7 @@ public class QueueFairAdapter extends BaseAdapter {
     }
 
 
-    public boolean validateCookie(QueueFairSettings.Queue queue, String cookie) {
+    public boolean validateCookie(Queue queue, String cookie) {
         return validateCookie(queue.secret, queue.passedLifetimeMinutes, cookie);
     }
 
@@ -894,255 +536,6 @@ public class QueueFairAdapter extends BaseAdapter {
         return java.util.regex.Pattern.matches("\\d+", s);
     }
 
-    private boolean validateQuery(QueueFairSettings.Queue queue) {
-        return validateQuery(queue.secret);
-    }
-
-    /**
-     * Convenience method to validate a PassedString, present in the query string of
-     * the page URL.
-     *
-     * @param secret the queue secret from the Portal
-     * @return true if the query string is valid. Note that this is time sensitive.
-     */
-    public boolean validateQuery(String secret) {
-        String str = requestedURL;
-
-        if (str == null)
-            return false;
-
-        try {
-
-            int i = str.indexOf('?');
-
-            if (i == -1) {
-                if (QueueFairConfig.debug)
-                    log.info("QF No query string found.");
-                return false;
-            }
-
-            if (i == str.length() - 1) {
-                if (QueueFairConfig.debug)
-                    log.info("QF Query string empty.");
-                return false;
-            }
-
-            str = str.substring(i + 1);
-
-            if (QueueFairConfig.debug)
-                log.info("QF Validating Passed Query " + str);
-
-            int hPos = str.lastIndexOf("qfh=");
-            int qPos = str.lastIndexOf("qfqid=");
-
-            if (hPos == -1) {
-                if (QueueFairConfig.debug)
-                    log.info("QF No hash found! " + str);
-                return false;
-            }
-
-            if (qPos == -1) {
-                if (QueueFairConfig.debug)
-                    log.info("QF No qID found! " + str);
-                return false;
-            }
-
-            String queryHash = getValueQuick(str, "qfh=");
-
-            if (queryHash == null) {
-                if (QueueFairConfig.debug)
-                    log.info("QF Malformed hash");
-                return false;
-            }
-
-            String queryTS = getValueQuick(str, "qfts=");
-
-            if (queryTS == null) {
-                if (QueueFairConfig.debug)
-                    log.info("QF No Timestamp");
-                return false;
-            }
-
-            if (!isNumeric(queryTS)) {
-                if (QueueFairConfig.debug)
-                    log.info("QF Timestamp Not Numeric");
-                return false;
-            }
-
-            long qTS = Long.parseLong(queryTS);
-
-            if (qTS > (now / 1000) + QueueFairConfig.queryTimeLimitSeconds) {
-                if (QueueFairConfig.debug)
-                    log.info("QF Too Late " + queryTS + " " + (now / 1000));
-                return false;
-            }
-
-            if (qTS < (now / 1000) - QueueFairConfig.queryTimeLimitSeconds) {
-                if (QueueFairConfig.debug)
-                    log.info("QF Too Early " + queryTS + " " + (now / 1000));
-                return false;
-            }
-
-            if (!usesSecrets) {
-                return true;
-            }
-
-            String check = str.substring(qPos, hPos);
-
-            if (QueueFairConfig.debug)
-                log.info("QF Check is " + check);
-
-            String checkHash = createHash(secret, processIdentifier(userAgent) + check);
-
-            if (checkHash == null || !checkHash.equals(queryHash)) {
-                if (QueueFairConfig.debug)
-                    log.info("QF Failed Hash " + checkHash + " " + queryHash);
-                return false;
-            }
-
-            return true;
-        } catch (Exception e) {
-            log.log(Level.WARNING, "Could not validate query " + requestedURL, e);
-            return false;
-        }
-    }
-
-    private void checkQueryString() {
-        String urlParams = requestedURL;
-        if (QueueFairConfig.debug)
-            log.info("QF Checking URL for Passed String " + urlParams);
-        int q = urlParams.lastIndexOf("qfqid=");
-        if (q == -1) {
-            return;
-        }
-        if (QueueFairConfig.debug)
-            log.info("QF Passed string found");
-
-        int i = urlParams.lastIndexOf("qfq=");
-        if (i == -1)
-            return;
-
-        if (!QueueFairConfig.account.equals(getValueQuick(urlParams, "qfa="))) {
-            if (QueueFairConfig.debug)
-                log.info("QF Passed string does not match account.");
-            return;
-        }
-
-        if (QueueFairConfig.debug)
-            log.info("QF Passed String with Queue Name found");
-
-        int j = urlParams.indexOf('&', i);
-
-        int subStart = i + "qfq=".length();
-
-        String queueName = urlParams.substring(subStart, j);
-
-        if (QueueFairConfig.debug)
-            log.info("QF Queue name is " + queueName);
-        // var_dump(settings,"queues);
-        QueueFairSettings.Queue[] queues = settings.queues;
-
-        boolean foundQueue = false;
-        for (QueueFairSettings.Queue queue : queues) {
-            if (!queueName.equals(queue.name)) {
-                continue;
-            }
-            foundQueue = true;
-            if (QueueFairConfig.debug)
-                log.info("QF Found queue for querystring " + queueName);
-
-            String value = urlParams;
-            value = value.substring(value.lastIndexOf("qfqid"));
-
-            if (!validateQuery(queue)) {
-                // This can happen if it's a stale query string too - check for valid cookie.
-                String queueCookie = service.getCookie(COOKIE_NAME_BASE + queueName);
-                if (queueCookie != null && !"".equals(queueCookie)) {
-                    if (QueueFairConfig.debug)
-                        log.info("QF Query validation failed but we have cookie " + queueCookie);
-                    if (validateCookie(queue, queueCookie)) {
-                        if (QueueFairConfig.debug)
-                            log.info("QF ...and the cookie is valid. That's fine.");
-                        return;
-                    }
-                    if (QueueFairConfig.debug)
-                        log.info("QF Query AND Cookie validation failed!!!");
-                } else {
-                    if (QueueFairConfig.debug)
-                        log.info("QF Bad queueCookie for " + queueName + " " + queueCookie);
-                }
-
-                if (QueueFairConfig.debug)
-                    log.info("QF Query validation failed - redirecting to error page.");
-
-                String loc = QueueFairConfig.protocol + "://" + queue.queueServer + "/" + queue.name
-                        + "?qfError=InvalidQuery";
-
-                redirect(loc, 1);
-                return;
-            }
-
-            if (QueueFairConfig.debug)
-                log.info("QF Query validation succeeded for " + value);
-
-            checkAndAddCacheControl();
-            setCookie(queueName, value, queue.passedLifetimeMinutes * 60, queue.cookieDomain);
-
-            if (QueueFairConfig.debug)
-                log.info("QF Marking " + queueName + " as passed by queryString");
-            if (!continuePage) {
-                return;
-            }
-            markPassed(queueName);
-
-        }
-
-        if (!foundQueue) {
-            if (QueueFairConfig.debug)
-                log.info("QF no matching queue found for query string");
-        }
-
-    }
-
-    /**
-     * This is the main method. It downloads settings if necessary, validates any
-     * PassedString if present in the query string and converts it to a
-     * PassedCookie. It checks to see if the request matches any Activation Rules
-     * for any queue, and checks with the Queue-Fair servers to find out if the user
-     * should be queued. If the user should be queued, a redirect is sent to the
-     * user's browser.
-     *
-     * @return
-     */
-    public boolean isContinue() {
-        try {
-            if (QueueFairConfig.debug)
-                log.info("QF --------------- Adapter Starting");
-            now = System.currentTimeMillis();
-
-            setUIDFromCookie();
-
-            settings = loadSettings();
-
-            if (settings == null) {
-                return true;
-            }
-
-            gotSettings();
-
-            if (QueueFairConfig.debug)
-                log.info("QF --------------- Adapter Finished");
-            return continuePage;
-        } catch (Exception e) {
-            String message = "QF Exception in Adapter";
-            if (service != null) {
-                message += " for URL " + requestedURL;
-            }
-            log.log(Level.WARNING, message, e);
-            return true;
-        }
-    }
-
     private String urlencode(String input) {
         if (input == null) {
             return null;
@@ -1165,15 +558,6 @@ public class QueueFairAdapter extends BaseAdapter {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    /**
-     * If using QueueFairConfig.useThreadLocal = true, Be sure to call this in your ServletContextListener's contextDestroyed()
-     * method to prevent memory leak warnings due to use of ThreadLocals.
-     */
-    public static void onContextDestroy() {
-        adapters = null;
-        System.gc();
     }
 
     public QueueFairService getService() {
