@@ -71,6 +71,10 @@ public class QueueFairClient {
                     break;
                 case "ABANDON":
                     h.post(() -> listener.onAbandon(x.getString("cause")));
+                    if("Pause".equals(x.getString("cause"))) {
+                        //Do not unregister receiver on app pause.
+                        return;
+                    }
                     break;
                 default:
                     h.post(() -> listener.onError("Invalid result "+result));
@@ -262,3 +266,4 @@ public class QueueFairClient {
         return true;
     }
 }
+
