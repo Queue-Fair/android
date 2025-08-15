@@ -110,7 +110,13 @@ public class QueueFairActivity extends AppCompatActivity {
 
         webView.getSettings().setJavaScriptEnabled(true);
 
-
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return false;
+            }
+        });
+        
         h = new Handler(getMainLooper());
 
         complete = false;
@@ -224,3 +230,4 @@ public class QueueFairActivity extends AppCompatActivity {
         }
     }
 }
+
