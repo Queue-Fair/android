@@ -116,7 +116,9 @@ If you need to use a variety of different QueueFairActivity subclasses for diffe
 
 Logging to Logcat is disabled by default, but you can enable it with QueueFairConfig.debug = true - but please make sure it is disabled for release versions of your app.
 
-Unlike our Server-Side Adapters, this Adapter does not download your queue settings from the Portal – rather you specify the queue system name you want to use, and the Passed Lifetime (which defaults to 20 minutes) in your code - so the Passed Lifetime setting in the Portal is ignored. Activation Rules are not relevant for any of our App adapters.
+Unlike our Server-Side Adapters, this Adapter does not download your queue settings file from the Portal.  Activation Rules are not relevant for our App adapters so need not be downloaded, and the Passed Lifetime is instead obtained direct from our Queue Servers at the moment a Passed Cookie is to be created.
+
+You can override the Passed Lifetime from the Queue Servers with a parameter in code if you wish.
 
 Unlike our Server-Side Adapters, The Android adapter always works in SAFE_MODE - SIMPLE_MODE is not suitable for this use case.
 
