@@ -25,7 +25,7 @@ public class QueueFairClient {
     String accountSystemName;
     String queueSystemName;
     String variant;
-    int passedLifetimeMinutes = 20;
+    int passedLifetimeMinutes = -1;   //Will get this from server
     QueueFairClientListener listener;
     QueueFairAndroidService service;
     QueueFairAndroidAdapter adapter;
@@ -64,7 +64,7 @@ public class QueueFairClient {
                     //Return without unregistering.
                     return;
                 case "SUCCESS":
-                    onPassFromQueue(x.getString("target"), x.getString("passType"), x.getLong("when"));
+                    onPassFromQueue(x.getString("target"), x.getString("passType"), x.getLong("when"), x.getInt("pl"));
                     break;
                 case "ERROR":
                     h.post(() -> listener.onError(x.getString("message")));
@@ -84,11 +84,12 @@ public class QueueFairClient {
         }
     }
 
-    /* Retained for backward compatibility - defaults to 20 minutes Passed Lifetime */
+    /* Will use PassedLifetime from queue servers when supplied.  Defaults to 20 minutes if absent. */
     public QueueFairClient(Activity parent, String queueServerDomain, String accountSystemName, String queueSystemName, String variant, QueueFairClientListener listener) {
-        this(parent,queueServerDomain,accountSystemName,queueSystemName,variant,20,listener);
+        this(parent,queueServerDomain,accountSystemName,queueSystemName,variant,-1,listener);
     }
 
+    /* You can override the PassedLifetime received from the queue servers by supplying a parameter */
     public QueueFairClient(Activity parent, String queueServerDomain, String accountSystemName, String queueSystemName, String variant, int passedLifetimeMinutes, QueueFairClientListener listener) {
         this.parent = parent;
         this.accountSystemName = accountSystemName;
@@ -214,7 +215,7 @@ public class QueueFairClient {
         QueueFairActivity.clearCookies(parent);
     }
 
-    public void onPassFromQueue(String target, String passType, long when) {
+    public void onPassFromQueue(String target, String passType, long when, int pl) {
         h.post(() -> {
             if (QueueFairConfig.debug) Log.i(TAG, "Got pass to target " + target);
             if (adapter == null) {
@@ -231,6 +232,8 @@ public class QueueFairClient {
                 return;
             }
             String validation = target.substring(i);
+
+            adapter.conditionalSetPassedLifetime(pl);
 
             service.setCookie(QueueFairAdapter.COOKIE_NAME_BASE + queueSystemName, validation, adapter.adapterQueue.passedLifetimeMinutes * 60, null);
 
@@ -266,4 +269,5 @@ public class QueueFairClient {
         return true;
     }
 }
+
 
