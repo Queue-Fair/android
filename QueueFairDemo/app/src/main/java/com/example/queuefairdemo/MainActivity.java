@@ -45,8 +45,8 @@ public class MainActivity extends Activity {
         //QueueFairConfig.settingsCacheLifetimeMinutes = 0;
 
         //You MUST replace the fields indicated with the system name of your account, and the system name of the queue you wish to use.
-        //In this example, the passedLifetime is here set to 5 minutes.  The Passed Lifetime setting in the Portal is no longer used.
-        QueueFairClient client = new QueueFairClient(this, null, "REPLACE_WITH_ACCOUNT_SYSTEM_NAME","REPLACE_WITH_QUEUE_SYSTEM_NAME",null, 5, new QueueFairClientListener() {
+        //This version gets the PassedLifetime direct from the servers so you don't need to set it here.
+        QueueFairClient client = new QueueFairClient(this, null, "REPLACE_WITH_ACCOUNT_SYSTEM_NAME","REPLACE_WITH_QUEUE_SYSTEM_NAME", null, new QueueFairClientListener() {
 
             @Override
             //Called by the adapter if there is no internet connection.
