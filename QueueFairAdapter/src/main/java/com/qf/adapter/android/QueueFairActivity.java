@@ -10,7 +10,9 @@ import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -175,6 +177,16 @@ public class QueueFairActivity extends AppCompatActivity {
                         broadcastError("Invalid target from queue.");
                         return true;
                     }
+
+                    int pl = -1;
+                    try {
+                        pl = json.getInt("pl");
+                    } catch (Exception e) {
+                        if (QueueFairConfig.debug) {
+                            Log.i("QFWCC", "Error reading Passed Lifetime from redirect",  e);
+                        }
+                    }
+                    
                     complete = true;
                     end(when);
 
@@ -183,6 +195,7 @@ public class QueueFairActivity extends AppCompatActivity {
                     intent.putExtra("target", target);
                     intent.putExtra("when", when);
                     intent.putExtra("passType", passType);
+                    intent.putExtra("pl",pl);
                     intent.putExtra("result", "SUCCESS");
                     sendBroadcast(intent);
                     return true;
@@ -230,4 +243,5 @@ public class QueueFairActivity extends AppCompatActivity {
         }
     }
 }
+
 
