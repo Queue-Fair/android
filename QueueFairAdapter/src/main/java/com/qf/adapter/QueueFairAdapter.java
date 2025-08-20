@@ -24,7 +24,7 @@ public class QueueFairAdapter extends BaseAdapter {
         public String secret;
         public String variant;
         public String dynamicTarget = "disabled";
-        public int passedLifetimeMinutes = 20;
+        public int passedLifetimeMinutes = -1;    //Will be filled in later.
     }
 
     public static final String COOKIE_NAME_BASE = "QueueFair-Pass-";
@@ -358,6 +358,9 @@ public class QueueFairAdapter extends BaseAdapter {
         }
 
         // SafeGuard etc
+        int pl = getInt(adapterResult,"pl");
+        conditionalSetPassedLifetime(pl);
+        
         checkAndAddCacheControl();
         setCookie(getStr(adapterResult, "queue"), urldecode(getStr(adapterResult, "validation")),
                 adapterQueue.passedLifetimeMinutes * 60, adapterQueue.cookieDomain);
@@ -369,6 +372,25 @@ public class QueueFairAdapter extends BaseAdapter {
             log.info("QF Marking " + getStr(adapterResult, "queue") + " as passed by adapter.");
         markPassed(getStr(adapterResult, "queue"));
 
+    }
+
+    public int conditionalSetPassedLifetime(int pl) {
+        if (adapterQueue.passedLifetimeMinutes != -1) {
+            if (QueueFairConfig.debug) {
+                log.info("PassedLifetime set in code as " + adapterQueue.passedLifetimeMinutes + " - using.");
+            }
+            return adapterQueue.passedLifetimeMinutes;
+        }
+
+        if (pl > 0) {
+            if (QueueFairConfig.debug) log.info("Using received PassedLifetime " + pl + " minutes.");
+            adapterQueue.passedLifetimeMinutes = pl;
+            return pl;
+        }
+
+        if (QueueFairConfig.debug) log.info("Response does not contain PassedLifetime and not set in code - defaulting to 20 mins");
+        adapterQueue.passedLifetimeMinutes = 20;
+        return 20;
     }
 
     public void redirect(String location, int sleep) {
@@ -569,3 +591,4 @@ public class QueueFairAdapter extends BaseAdapter {
     }
 
 }
+
